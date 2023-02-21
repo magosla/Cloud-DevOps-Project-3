@@ -164,6 +164,46 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
+  test-workspace:
+    docker:
+      - image: amazon/aws-cli
+    steps:      
+      - checkout
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run: cat .circleci/ansible/inventory.txt
+      - run: cat ~/project/.circleci/ansible/inventory.txt
+
+  configure-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:      
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["9e:38:18:9b:08:bb:9e:94:01:7f:78:17:3d:56:d1:a6"]
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            yum update -y && \
+            amazon-linux-extras install ansible2 -y && \
+            ansible --version
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible && \
+            ansible-playbook configure-server.yml
+      # Here's where you will add some code to rollback on failure
+
 workflows:
   default:
     jobs:
@@ -189,3 +229,6 @@ workflows:
            - test-frontend
            - scan-backend
            - scan-frontend
+      - test-workspace:
+         requires:
+           - deploy-infrastructure
