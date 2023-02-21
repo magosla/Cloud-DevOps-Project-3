@@ -1,6 +1,24 @@
 version: 2.1
 orbs:
   slack: circleci/slack@4.12.1
+  aws-cli: circleci/aws-cli@1.4.0
+
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      id:
+        type: string
+    steps:
+      - run:
+          name: "Destroy stacks of ID: <<parameters.id>>"
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name <<parameters.id>>-udapeople-frontend; \
+            aws cloudformation delete-stack --stack-name <<parameters.id>>-udapeople-backend
+          # command: |
+          #   aws cloudformation delete-stack --stack-name <<parameters.id>>-udapeople-backend
+            
 
 jobs:
   build-frontend:
@@ -107,6 +125,45 @@ jobs:
           template: success_tagged_deploy_1
           event: pass
 
+  deploy-infrastructure:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - aws-cli/setup
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+              --tags project=udapeople
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+              --tags project=udapeople
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --output text >> .circleci/ansible/inventory.txt 
+            
+      - run: cat .circleci/ansible/inventory.txt
+      - run: cat ~/project/.circleci/ansible/inventory.txt
+      - run: pwd
+      - destroy-environment:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+
 workflows:
   default:
     jobs:
@@ -126,3 +183,9 @@ workflows:
          context: udacity-project3
          requires:
            - build-backend
+      - deploy-infrastructure:
+         requires:
+           - test-backend
+           - test-frontend
+           - scan-backend
+           - scan-frontend
