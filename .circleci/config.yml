@@ -78,7 +78,7 @@ jobs:
             cd frontend && \
             npm install && \
             # npm install oauth-sign@^0.9.0
-            npm audit fix --audit-level=critical
+            npm audit --audit-level=critical
       - slack/notify:
           template: basic_fail_1
           event: fail
@@ -103,9 +103,6 @@ jobs:
       - slack/notify:
           template: basic_fail_1
           event: fail
-      - slack/notify:
-          template: success_tagged_deploy_1
-          event: pass
 
 workflows:
   default:
