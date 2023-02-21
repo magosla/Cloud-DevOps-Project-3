@@ -164,20 +164,6 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
-  test-workspace:
-    docker:
-      - image: amazon/aws-cli
-    steps:      
-      - checkout
-      - run:
-          name: Install tar utility
-          command: |
-            yum install -y tar gzip
-      - attach_workspace:
-          at: ~/
-      - run: cat .circleci/ansible/inventory.txt
-      - run: cat ~/project/.circleci/ansible/inventory.txt
-
   configure-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -229,6 +215,6 @@ workflows:
            - test-frontend
            - scan-backend
            - scan-frontend
-      - test-workspace:
+      - configure-infrastructure:
          requires:
            - deploy-infrastructure
