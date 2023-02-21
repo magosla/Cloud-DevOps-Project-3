@@ -1,5 +1,7 @@
 version: 2.1
-            
+orbs:
+  slack: circleci/slack@4.12.1
+
 jobs:
   build-frontend:
     docker:
@@ -77,6 +79,12 @@ jobs:
             npm install && \
             # npm install oauth-sign@^0.9.0
             npm audit fix --audit-level=critical
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
+      - slack/notify:
+          template: success_tagged_deploy_1
+          event: pass
 
   scan-backend:
     docker:
@@ -92,6 +100,12 @@ jobs:
             npm install && \
             # npm install oauth-sign@^0.9.0
             npm audit fix --audit-level=critical
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
+      - slack/notify:
+          template: success_tagged_deploy_1
+          event: pass
 
 workflows:
   default:
@@ -105,8 +119,10 @@ workflows:
          requires:
            - build-backend
       - scan-frontend:
+         context: udacity-project3
          requires:
            - build-frontend
       - scan-backend:
+         context: udacity-project3
          requires:
            - build-backend
