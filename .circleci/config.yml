@@ -169,8 +169,6 @@ jobs:
       - aws-cli/setup
       - add_ssh_keys:
           fingerprints: ["af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"]
-      - attach_workspace:
-          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -179,6 +177,8 @@ jobs:
             sudo add-apt-repository --yes --update ppa:ansible/ansible
             sudo apt -y install ansible
             ansible --version
+      - attach_workspace:
+          at: ~/
       - run:
           name: Configure server
           command: |
