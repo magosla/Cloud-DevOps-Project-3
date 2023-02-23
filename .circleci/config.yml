@@ -7,6 +7,17 @@ environement:
   SSH_KEY_FINGERPRINT: "af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"
 
 commands:
+  install-aws-cli:
+    description: Install aws-cli
+    steps:
+      - run:
+          name: "Installing aws-cli"
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            rm -rf awscliv2*
+            
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -185,9 +196,11 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"]
+          fingerprints:
+            - $SSH_KEY_FINGERPRINT
       - attach_workspace:
           at: ~/
+      - install-aws-cli
       - run:
           name: Install dependencies
           command: |
@@ -199,8 +212,8 @@ jobs:
       - run:
           name: Configure server
           command: |
-            cat .circleci/ansible/inventory.txt
-            ansible-playbook .circleci/ansible/configure-server.yml
+            cd .circleci/ansible/
+            ansible-playbook configure-server.yml
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -209,13 +222,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-            rm -rf awscliv2*
+      - install-aws-cli
       - restore_cache:
           keys: [backend_build]
       - run:
@@ -241,6 +248,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - install-aws-cli
       - run:
           name: Install dependencies
           command: |
@@ -289,11 +297,11 @@ jobs:
           at: ~/
       - restore_cache:
           keys: [backend-build]
+      - install-aws-cli
       - run:
           name: Install dependencies
           command: |
             sudo apt update
-            sudo apt -y install aws-cli
             sudo apt -y install software-properties-common
             sudo add-apt-repository --yes --update ppa:ansible/ansible
             sudo apt -y install ansible
