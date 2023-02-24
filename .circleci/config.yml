@@ -217,7 +217,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:13.8.0
     steps:
       - checkout
       - install-aws-cli
@@ -243,7 +243,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:13.8.0
     steps:
       - checkout
       - install-aws-cli
@@ -280,12 +280,15 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:13.8.0
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: #["af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"]
+          fingerprints:
             - $SSH_KEY_FINGERPRINT
+      - attach_workspace:
+          at: ~/
+      - install-aws-cli
       - run:
           name: Install dependencies
           command: |
@@ -294,11 +297,6 @@ jobs:
             sudo add-apt-repository --yes --update ppa:ansible/ansible
             sudo apt -y install ansible
             ansible --version
-
-      - install-aws-cli
-
-      - attach_workspace:
-          at: ~/
 
       - run:
           name: Deploy backend
