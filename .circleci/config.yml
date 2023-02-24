@@ -37,8 +37,6 @@ commands:
   revert-migration:
     description: Revert database migration.
     steps:
-      - restore_cache:
-          keys: [backend-build]
       - run:
           name: "Revert database migration"
           when: on_fail
@@ -288,9 +286,6 @@ jobs:
       - add_ssh_keys:
           fingerprints: #["af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"]
             - $SSH_KEY_FINGERPRINT
-      - attach_workspace:
-          at: ~/
-      - install-aws-cli
       - run:
           name: Install dependencies
           command: |
@@ -299,6 +294,11 @@ jobs:
             sudo add-apt-repository --yes --update ppa:ansible/ansible
             sudo apt -y install ansible
             ansible --version
+
+      - install-aws-cli
+
+      - attach_workspace:
+          at: ~/
 
       - run:
           name: Deploy backend
