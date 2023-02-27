@@ -1,0 +1,3 @@
+- name: show_start_server_output
+  debug:
+   msg: "{{ start_server_result.stdout }} Running handler."
