@@ -27,7 +27,7 @@ commands:
         type: string
     steps:
       - run:
-          name: "Destroy workspace environemnt"
+          name: "Destroy workspace environment"
           when: on_fail
           command: |
             echo "Destroying workspace <<parameters.workflow_id>>"
@@ -379,9 +379,9 @@ jobs:
             
             if curl -s ${URL} | grep "Welcome"
             then
-              return 0
+              exit 0
             else
-              return 1
+              exit 1
             fi
 
       - destroy-environment:
