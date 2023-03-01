@@ -6,7 +6,6 @@ orbs:
 environement:
   SSH_KEY_FINGERPRINT: "af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"
   KVDB_ID: "QNxYTTzUe5zcXdiMuAEkRA"
-  PROJECT_NAME: "udapeople"
 
 commands:
   install-aws-cli:
@@ -239,7 +238,7 @@ jobs:
             cd backend
             npm install
             echo "destroy migration first with ${KVDB_ID}"
-            npm run migration:revert
+            npm run migrations:revert
 
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
