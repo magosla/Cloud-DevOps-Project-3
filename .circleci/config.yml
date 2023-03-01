@@ -48,6 +48,7 @@ commands:
             # Example: kvdb.io
             SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_ID}/migration_<< parameters.workflow_id >>)
             # Logic for reverting the database state
+            echo "Success=${SUCCESS}"
             if (( $SUCCESS == 1 ));
             then
               cd ~/project/backend
@@ -237,6 +238,9 @@ jobs:
           command: |
             cd backend
             npm install
+            echo "destroy migration first with $KVDB_ID}"
+            npm run migrations:revert
+
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
       - run:
@@ -500,13 +504,12 @@ workflows:
       - configure-infrastructure:
          requires:
            - deploy-infrastructure
-      # - run-migrations:
-      #    requires:
-      #      - configure-infrastructure
+      - run-migrations:
+         requires:
+           - configure-infrastructure
       - deploy-frontend:
          requires:
-          #  - run-migrations
-          - configure-infrastructure
+           - run-migrations
       - deploy-backend:
          requires:
            - deploy-frontend
