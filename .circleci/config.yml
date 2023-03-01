@@ -433,6 +433,7 @@ jobs:
       - run:
           name: Cleanup old stack
           command: |
+            pwd
             ls -ah
             cat project/old_workflow_id.txt
             # Fetch the Old workflow ID
