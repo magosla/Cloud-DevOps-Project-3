@@ -44,7 +44,7 @@ commands:
           when: on_fail
           command: |
             # Example: kvdb.io
-            SUCCESS=$(curl --insecure  https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_<< parameters.workflow_id >>)
+            SUCCESS=$(curl --insecure  https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_<<parameters.workflow_id>>)
             # Logic for reverting the database state
             echo "Success=${SUCCESS}"
             if (( $SUCCESS == 1 ));
@@ -246,7 +246,7 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-              curl --insecure https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_${CIRCLE_WORKFLOW:0:7} -d '1'
+              curl --insecure "https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_${CIRCLE_WORKFLOW:0:7}" -d '1'
             else
               echo "Migration was not executed"
             fi
