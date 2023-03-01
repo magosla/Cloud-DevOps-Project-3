@@ -238,8 +238,8 @@ jobs:
           command: |
             cd backend
             npm install
-            echo "destroy migration first with $KVDB_ID}"
-            npm run migrations:revert
+            echo "destroy migration first with ${KVDB_ID}"
+            npm run migration:revert
 
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
