@@ -398,7 +398,7 @@ jobs:
       - checkout
       - aws-cli/setup
       - run:
-          name: Get exixting stack id
+          name: Get existing stack id
           command: |
             # Fetch the Old workflow ID
             export OldWorkflowID=$(aws cloudformation \
@@ -407,11 +407,11 @@ jobs:
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
 
-            echo $OldWorkflowID > ~/project/old_workflow_id.txt
+            echo $OldWorkflowID > old_workflow_id.txt
       - persist_to_workspace:
           root: ~/
           paths:
-            - ~/project/old_workflow_id.txt
+            - project/old_workflow_id.txt
       - run:
           name: Update Cloudfront distribution
           command: |
@@ -431,9 +431,9 @@ jobs:
       - run:
           name: Cleanup old stack
           command: |
-            cat ~/project/old_workflow_id.txt
+            cat project/old_workflow_id.txt
             # Fetch the Old workflow ID
-            export OldWorkflowID = $(cat ~/project/old_workflow_id.txt)
+            export OldWorkflowID = $(cat project/old_workflow_id.txt)
 
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -501,8 +501,8 @@ workflows:
       #      - configure-infrastructure
       - deploy-frontend:
          requires:
-           #- run-migrations
-           - configure-infrastructure
+          #  - run-migrations
+          - configure-infrastructure
       - deploy-backend:
          requires:
            - deploy-frontend
