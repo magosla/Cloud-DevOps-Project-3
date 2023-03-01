@@ -6,6 +6,7 @@ orbs:
 environement:
   SSH_KEY_FINGERPRINT: "af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"
   KVDB_ID: "QNxYTTzUe5zcXdiMuAEkRA"
+  PROJECT_NAME: "udapeople"
 
 commands:
   install-aws-cli:
@@ -26,7 +27,7 @@ commands:
         type: string
     steps:
       - run:
-          name: "Destroy workspace environemnt"
+          name: "Destroy workspace environment"
           when: on_fail
           command: |
             echo "Destroying workspace <<parameters.workflow_id>>"
@@ -244,8 +245,10 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               curl --insecure https://kvdb.io/${KVDB_ID}/migration_${CIRCLE_WORKFLOW:0:7} -d '1'
+            else
+              echo "Migration was not executed"
             fi
-  
+
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -378,11 +381,65 @@ jobs:
             
             if curl -s ${URL} | grep "Welcome"
             then
-                # Change this to 0 after the job fails
-              return 1
+              exit 0
             else
-              return 1
+              exit 1
             fi
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+      - revert-migration:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+
+  cloudfront-update:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - aws-cli/setup
+      - run:
+          name: Update Cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+
+  cleanup:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - aws-cli/setup
+      - run:
+          name: Cleanup old stack
+          command: |
+            # Fetch the Old workflow ID
+            export OldWorkflowID=$(aws cloudformation \
+                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                    --no-paginate --output text)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+
+            # Fetch the stack names          
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                    --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"  
+
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            then
+              echo "Empty bucket contents"
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+
+              echo "Deleting old stacks"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            else
+              echo "Using recent stack"
+            fi
+
+            echo "Old workflowID = ${OldWorkflowID}"
+            echo "Current workflowID = ${CIRCLE_WORKFLOW_ID:0:7}"
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -434,3 +491,9 @@ workflows:
       - smoke-test:
          requires:
            - deploy-backend
+      - cloudfront-update:
+         requires:
+          - smoke-test
+      - cleanup:
+         requires:
+           - cloudfront-update
