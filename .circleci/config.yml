@@ -436,8 +436,6 @@ jobs:
           name: Cleanup old stack
           command: |
             pwd
-            ls -ah
-            cat old_workflow_id.txt
             # Fetch the Old workflow ID
             export OldWorkflowID=$(cat old_workflow_id.txt)
 
@@ -452,7 +450,6 @@ jobs:
             if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
             then
               echo "Empty bucket contents"
-              #aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
               aws s3 rm s3://udapeople-"${OldWorkflowID}" --recursive || true
 
               echo "Deleting old stacks"
