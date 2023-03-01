@@ -71,6 +71,10 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   build-backend:
     docker:
@@ -88,6 +92,10 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   test-frontend:
     docker:
@@ -102,6 +110,10 @@ jobs:
             cd frontend && \
             npm install && \
             npm run test
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   test-backend:
     docker:
@@ -116,6 +128,10 @@ jobs:
             cd backend && \
             npm install && \
             npm run test
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   scan-frontend:
     docker:
@@ -134,9 +150,6 @@ jobs:
       - slack/notify:
           template: basic_fail_1
           event: fail
-      - slack/notify:
-          template: success_tagged_deploy_1
-          event: pass
 
   scan-backend:
     docker:
@@ -155,9 +168,6 @@ jobs:
       - slack/notify:
           template: basic_fail_1
           event: fail
-      - slack/notify:
-          template: success_tagged_deploy_1
-          event: pass
 
   deploy-infrastructure:
     executor: aws-cli/default
@@ -195,6 +205,10 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   configure-infrastructure:
     docker:
@@ -222,6 +236,10 @@ jobs:
             ansible-playbook configure-server.yml
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   run-migrations:
     docker:
@@ -253,6 +271,10 @@ jobs:
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   deploy-frontend:
     docker:
@@ -290,6 +312,10 @@ jobs:
       
       - revert-migration:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
 
   deploy-backend:
@@ -346,6 +372,10 @@ jobs:
 
       - revert-migration:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   smoke-test:
     executor: aws-cli/default
@@ -393,6 +423,10 @@ jobs:
 
       - revert-migration:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   cloudfront-update:
     executor: aws-cli/default
@@ -423,7 +457,17 @@ jobs:
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
             --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-            --tags project=udapeople
+            --tags project=udapeople 
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+      - revert-migration:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+          
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
 
   cleanup:
     executor: aws-cli/default
@@ -467,6 +511,13 @@ jobs:
 
       - revert-migration:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+
+      - slack/notify:
+          template: basic_fail_1
+          event: fail
+      - slack/notify:
+          template: success_tagged_deploy_1
+          event: pass
 
 workflows:
   default:
