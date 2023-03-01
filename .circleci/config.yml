@@ -398,6 +398,21 @@ jobs:
       - checkout
       - aws-cli/setup
       - run:
+          name: Get exixting stack id
+          command: |
+            # Fetch the Old workflow ID
+            export OldWorkflowID=$(aws cloudformation \
+                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                    --no-paginate --output text)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+
+            echo $OldWorkflowID > ~/project/old_workflow_id.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - ~/project/old_workflow_id.txt
+      - run:
           name: Update Cloudfront distribution
           command: |
             aws cloudformation deploy \
@@ -411,13 +426,15 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup
+      - attach_workspace:
+          at: ~/
       - run:
           name: Cleanup old stack
           command: |
+            cat ~/project/old_workflow_id.txt
             # Fetch the Old workflow ID
-            export OldWorkflowID=$(aws cloudformation \
-                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                    --no-paginate --output text)
+            export OldWorkflowID = $(cat ~/project/old_workflow_id.txt)
+
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -426,7 +443,7 @@ jobs:
                     --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
             echo Stack names: "${STACKS[@]}"  
 
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            if ["${CIRCLE_WORKFLOW_ID:0:7}" -ne "${OldWorkflowID}" ]
             then
               echo "Empty bucket contents"
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
@@ -479,12 +496,13 @@ workflows:
       - configure-infrastructure:
          requires:
            - deploy-infrastructure
-      - run-migrations:
-         requires:
-           - configure-infrastructure
+      # - run-migrations:
+      #    requires:
+      #      - configure-infrastructure
       - deploy-frontend:
          requires:
-           - run-migrations
+           #- run-migrations
+           - configure-infrastructure
       - deploy-backend:
          requires:
            - deploy-frontend
