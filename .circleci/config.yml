@@ -244,11 +244,9 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
-            echo "WorkflowID=${CIRCLE_WORKFLOW:0:7}"
-            
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-              curl --insecure "https://kvdb.io/UoMPHS7P3FHPjvCNoE8Uue/migration_${CIRCLE_WORKFLOW:0:7}" -d '1'
+              curl --insecure "https://kvdb.io/UoMPHS7P3FHPjvCNoE8Uue/migration_${CIRCLE_WORKFLOW_ID:0:7}" -d '1'
             else
               echo "Migration was not executed"
             fi
