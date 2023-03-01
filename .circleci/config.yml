@@ -5,7 +5,6 @@ orbs:
 
 environement:
   SSH_KEY_FINGERPRINT: "af9:8b:25:f2:1b:3e:40:dd:91:5b:49:86:11:3e:1a:36"
-  KVDB_ID: "QNxYTTzUe5zcXdiMuAEkRA"
 
 commands:
   install-aws-cli:
@@ -45,7 +44,7 @@ commands:
           when: on_fail
           command: |
             # Example: kvdb.io
-            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_ID}/migration_<< parameters.workflow_id >>)
+            SUCCESS=$(curl --insecure  https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_<< parameters.workflow_id >>)
             # Logic for reverting the database state
             echo "Success=${SUCCESS}"
             if (( $SUCCESS == 1 ));
@@ -237,7 +236,7 @@ jobs:
           command: |
             cd backend
             npm install
-            echo "destroy migration first with ${KVDB_ID}"
+            echo "destroy migration first"
             npm run migrations:revert
 
             npm run migrations > migrations_dump.txt
@@ -247,7 +246,7 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-              curl --insecure https://kvdb.io/${KVDB_ID}/migration_${CIRCLE_WORKFLOW:0:7} -d '1'
+              curl --insecure https://kvdb.io/6WTopKdXazeWHqq6aChvqC/migration_${CIRCLE_WORKFLOW:0:7} -d '1'
             else
               echo "Migration was not executed"
             fi
