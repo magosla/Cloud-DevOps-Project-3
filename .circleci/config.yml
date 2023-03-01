@@ -254,8 +254,9 @@ jobs:
           command: |
             cd backend
             npm install
-            echo "destroy migration first"
-            npm run migrations:revert
+            
+            # echo "destroy migration first"
+            # npm run migrations:revert
 
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
