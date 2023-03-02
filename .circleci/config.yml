@@ -521,38 +521,6 @@ jobs:
           event: pass
 
 
-
-  node-exporter:
-    docker:
-      - image: cimg/node:13.8.0
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - $SSH_KEY_FINGERPRINT
-      - attach_workspace:
-          at: ~/
-      - install-aws-cli
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt update
-            sudo apt -y install software-properties-common
-            sudo add-apt-repository --yes --update ppa:ansible/ansible
-            sudo apt -y install ansible
-            ansible --version
-      - run:
-          name: Configure server
-          command: |
-            cd .circleci/ansible/
-            ansible-playbook configure-node-exporter.yml
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          
-      - slack/notify:
-          template: basic_fail_1
-          event: fail
-
 workflows:
   default:
     jobs:
@@ -603,6 +571,3 @@ workflows:
       - cleanup:
          requires:
            - cloudfront-update
-      - node-exporter:
-         requires:
-           - cleanup
